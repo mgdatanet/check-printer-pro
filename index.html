@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check Printer Pro</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #eae5df;
+      --surface: #fff;
+      --ink: #1a1a1a;
+      --ink-light: #6b6560;
+      --ink-muted: #a09890;
+      --accent: #1b5e3b;
+      --accent-light: #2a7a4e;
+      --accent-bg: #e0f0e6;
+      --border: #d5cec5;
+      --border-light: #e8e2db;
+      --danger: #9a3030;
+      --shadow: rgba(30, 25, 20, .08)
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--ink)
+    }
+
+    /* AUTH */
+    #auth-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1b5e3b 0%, #0d3320 50%, #1a1a2e 100%)
+    }
+
+    .auth-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px;
+      width: 400px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .3)
+    }
+
+    .auth-card .logo {
+      justify-content: center;
+      margin-bottom: 8px
+    }
+
+    .auth-card .logo span {
+      display: block;
+      text-align: center
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 3px;
+      margin: 20px 0 16px;
+      background: var(--bg);
+      padding: 3px;
+      border-radius: 7px
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 5px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--ink-muted);
+      font-family: 'DM Sans', sans-serif
+    }
+
+    .auth-tab.on {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 1px 3px var(--shadow)
+    }
+
+    .auth-error {
+      background: #fdf0f0;
+      color: var(--danger);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: none;
+      margin-bottom: 12px
+    }
+
+    .auth-card .fg {
+      margin-bottom: 14px
+    }
+
+    .auth-card .fg label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-light);
+      margin-bottom: 4px
+    }
+
+    .auth-card .fg input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      outline: none
+    }
+
+    .auth-card .fg input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-bg)
+    }
+
+    .auth-submit {
+      width: 100%;
+      padding: 11px;
+      font-size: 13px;
+      margin-top: 4px
+    }
+
+    .auth-forgot {
+      text-align: center;
+      margin-top: 12px
+    }
+
+    .auth-forgot a {
+      font-size: 11px;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer
+    }
+
+    .auth-forgot a:hover {
+      text-decoration: underline
+    }
+
+    .auth-success {
+      background: var(--accent-bg);
+      color: var(--accent);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      display: none;
+      margin-bottom: 12px
+    }
+
+    .auth-back {
+      font-size: 11px;
+      color: var(--accent);
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: 'DM Sans', sans-serif;
+      margin-bottom: 14px;
+      display: none
+    }
+
+    .auth-back:hover {
+      text-decoration: underline
+    }
+
+    /* HEADER */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 3px var(--shadow)
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 700;
+      font-size: 15px
+    }
+
+    .logo h1 {
+      font-size: 17px;
+      font-weight: 700
+    }
+
+    .logo span {
+      font-size: 10px;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: .5px
+    }
+
+    .main-nav {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      padding: 3px;
+      border-radius: 8px
+    }
+
+    .nav-btn {
+      padding: 7px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--ink-muted);
+      font-family: 'DM Sans', sans-serif;
+      transition: all .15s
+    }
+
+    .nav-btn.on {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 1px 3px var(--shadow)
+    }
+
+    .nav-btn:hover:not(.on) {
+      color: var(--ink)
+    }
+
+    .user-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .user-bar span {
+      font-size: 11px;
+      color: var(--ink-light)
+    }
+
+    /* BUTTONS */
+    .btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .btn-p {
+      background: var(--accent);
+      color: #fff
+    }
+
+    .btn-p:hover {
+      background: var(--accent-light)
+    }
+
+    .btn-s {
+      background: var(--surface);
+      color: var(--ink);
+      border: 1px solid var(--border)
+    }
+
+    .btn-s:hover {
+      background: var(--bg)
+    }
+
+    .btn-d {
+      background: transparent;
+      color: var(--danger);
+      font-size: 11px;
+      padding: 5px 10px
+    }
+
+    .btn-d:hover {
+      background: #fdf0f0
+    }
+
+    .btn-w {
+      background: #e8a820;
+      color: #fff
+    }
+
+    .btn-w:hover {
+      background: #d49a15
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed
+    }
+
+    /* CREATE VIEW */
+    .app {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      min-height: calc(100vh - 55px)
+    }
+
+    .side {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      max-height: calc(100vh - 55px)
+    }
+
+    .side-in {
+      padding: 20px
+    }
+
+    .tabs {
+      display: flex;
+      gap: 3px;
+      margin-bottom: 18px;
+      background: var(--bg);
+      padding: 3px;
+      border-radius: 7px
+    }
+
+    .tab {
+      flex: 1;
+      padding: 7px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 5px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--ink-muted);
+      font-family: 'DM Sans', sans-serif
+    }
+
+    .tab.on {
+      background: var(--surface);
+      color: var(--accent);
+      box-shadow: 0 1px 3px var(--shadow)
+    }
+
+    .tab .d {
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      margin-right: 4px;
+      background: var(--border);
+      vertical-align: middle
+    }
+
+    .tab.on .d {
+      background: var(--accent)
+    }
+
+    .tab.has .d {
+      background: var(--accent-light)
+    }
+
+    .fs {
+      margin-bottom: 18px
+    }
+
+    .fs-t {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--ink-muted);
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid var(--border-light)
+    }
+
+    .fg {
+      margin-bottom: 12px
+    }
+
+    .fg label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--ink-light);
+      margin-bottom: 3px
+    }
+
+    .fg input,
+    .fg textarea {
+      width: 100%;
+      padding: 7px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 5px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      color: var(--ink);
+      background: #fdfcf8;
+      outline: none
+    }
+
+    .fg input:focus,
+    .fg textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-bg)
+    }
+
+    .fg textarea {
+      resize: vertical;
+      min-height: 55px;
+      line-height: 1.4
+    }
+
+    .fr {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px
+    }
+
+    .hint {
+      font-size: 9px;
+      color: var(--ink-muted);
+      margin-top: 2px;
+      font-style: italic
+    }
+
+    .auto-filled {
+      background: var(--accent-bg) !important;
+      border-color: var(--accent) !important
+    }
+
+    .cal {
+      background: var(--bg);
+      border-radius: 7px;
+      padding: 12px;
+      margin-bottom: 16px
+    }
+
+    .cal summary {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .7px;
+      color: var(--ink-light);
+      cursor: pointer;
+      user-select: none
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 8px;
+      margin-top: 8px
+    }
+
+    .cal-grid label {
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      margin-bottom: 1px;
+      display: block
+    }
+
+    .cal-grid input {
+      width: 100%;
+      padding: 4px 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--surface);
+      outline: none
+    }
+
+    .ci {
+      display: flex;
+      flex-direction: column
+    }
+
+    .cal-note {
+      font-size: 9px;
+      color: var(--ink-muted);
+      font-style: italic;
+      margin: 6px 0 2px
+    }
+
+    .cal-btns {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px
+    }
+
+    .font-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 10px 12px;
+      background: var(--bg);
+      border-radius: 7px
+    }
+
+    .font-ctrl label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--ink-light);
+      white-space: nowrap
+    }
+
+    .font-ctrl input[type=range] {
+      flex: 1;
+      accent-color: var(--accent)
+    }
+
+    .font-ctrl .fval {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      min-width: 32px;
+      text-align: center
+    }
+
+    .save-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: var(--accent-bg);
+      border-radius: 8px;
+      border: 1px solid #b8dcc5
+    }
+
+    .edit-banner {
+      background: #fff8e6;
+      border: 1px solid #e8d48a;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      color: #6b5a1e;
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    /* PREVIEW */
+    .prev {
+      padding: 24px;
+      overflow: auto;
+      max-height: calc(100vh - 55px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #d5d0ca
+    }
+
+    .prev-t {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--ink-muted);
+      margin-bottom: 8px;
+      align-self: flex-start
+    }
+
+    .print-tips {
+      align-self: stretch;
+      background: #fff8e6;
+      border: 1px solid #e8d48a;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #6b5a1e
+    }
+
+    .print-tips b {
+      color: #4a3e10
+    }
+
+    .page {
+      width: 8.5in;
+      height: 11in;
+      background: #fff;
+      position: relative;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, .18);
+      flex-shrink: 0
+    }
+
+    .zone {
+      width: 8.5in;
+      height: 3.667in;
+      position: relative;
+      overflow: visible
+    }
+
+    .zone-sep {
+      position: absolute;
+      bottom: 0;
+      left: .3in;
+      right: .3in;
+      border-bottom: 1px dashed #ddd
+    }
+
+    .zone-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 13px;
+      color: #ccc;
+      font-weight: 500;
+      pointer-events: none
+    }
+
+    .cf {
+      position: absolute;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14pt;
+      color: #000;
+      font-weight: 600;
+      white-space: nowrap;
+      line-height: 1.3
+    }
+
+    .cf-addr {
+      white-space: pre-line;
+      font-size: 12pt;
+      line-height: 1.35
+    }
+
+    .cf-atxt {
+      font-size: 12pt;
+      font-weight: 500
+    }
+
+    /* HISTORY */
+    .hist-view {
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto
+    }
+
+    .hist-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border-radius: 8px;
+      border: 1px solid var(--border)
+    }
+
+    .hist-bar select,
+    .hist-bar input {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 12px;
+      font-family: 'DM Sans', sans-serif
+    }
+
+    .hist-bar .spacer {
+      flex: 1
+    }
+
+    .hist-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px var(--shadow)
+    }
+
+    .hist-table th {
+      background: var(--bg);
+      padding: 10px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--ink-muted);
+      text-align: left;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .hist-table td {
+      padding: 10px 12px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle
+    }
+
+    .hist-table tr:hover td {
+      background: #faf9f6
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase
+    }
+
+    .badge-pending {
+      background: #fff3cd;
+      color: #856404
+    }
+
+    .badge-printed {
+      background: #d4edda;
+      color: #155724
+    }
+
+    .badge-voided {
+      background: #f8d7da;
+      color: #721c24
+    }
+
+    .hist-actions {
+      display: flex;
+      gap: 4px
+    }
+
+    .hist-actions button {
+      padding: 4px 8px;
+      font-size: 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--ink-light);
+      font-family: 'DM Sans', sans-serif
+    }
+
+    .hist-actions button:hover {
+      background: var(--bg)
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--ink-muted)
+    }
+
+    .empty-state h3 {
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: var(--ink-light)
+    }
+
+    /* REPORTS */
+    .rpt-view {
+      padding: 24px;
+      max-width: 1200px;
+      margin: 0 auto
+    }
+
+    .rpt-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px
+    }
+
+    .rpt-card {
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      text-align: center
+    }
+
+    .rpt-card .val {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'IBM Plex Mono', monospace
+    }
+
+    .rpt-card .lbl {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--ink-muted);
+      margin-top: 4px
+    }
+
+    /* TOAST */
+    .toast-box {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px
+    }
+
+    .toast {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #fff;
+      animation: fadeIn .3s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, .15)
+    }
+
+    .toast-ok {
+      background: #2a7a4e
+    }
+
+    .toast-err {
+      background: #9a3030
+    }
+
+    .toast-info {
+      background: #3b6ea5
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0)
+      }
+    }
+
+    .view {
+      display: none
+    }
+
+    .view.on {
+      display: block
+    }
+
+    .view-grid.on {
+      display: grid
+    }
+
+    /* PRINT */
+    @media print {
+      @page {
+        size: 8.5in 11in;
+        margin: 0
+      }
+
+      html,
+      body {
+        background: transparent !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 8.5in !important;
+        height: 11in !important;
+        overflow: visible !important
+      }
+
+      header,
+      #auth-screen,
+      .side,
+      .prev-t,
+      .no-print,
+      .hist-view,
+      .rpt-view,
+      .toast-box {
+        display: none !important
+      }
+
+      .app {
+        display: block !important;
+        width: 8.5in !important;
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important
+      }
+
+      .prev {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        max-height: none !important;
+        background: transparent !important;
+        width: 8.5in !important;
+        overflow: visible !important
+      }
+
+      .page {
+        width: 8.5in !important;
+        height: 11in !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: relative !important;
+        transform: none !important;
+        page-break-after: always
+      }
+
+      .page:last-child {
+        page-break-after: auto
+      }
+
+      .zone {
+        width: 8.5in !important;
+        height: 3.667in !important;
+        background: transparent !important;
+        position: relative !important;
+        overflow: visible !important
+      }
+
+      .zone-sep,
+      .zone-label {
+        display: none !important
+      }
+
+      .cf {
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact
+      }
+    }
+
+    @media(max-width:1100px) {
+      .app {
+        grid-template-columns: 1fr
+      }
+
+      .side {
+        max-height: none;
+        border-right: none;
+        border-bottom: 1px solid var(--border)
+      }
+
+      .prev {
+        max-height: none
+      }
+
+      .page {
+        transform: scale(.55);
+        transform-origin: top center
+      }
+
+      .main-nav {
+        display: none
+      }
+
+      .hdr-mobile-nav {
+        display: flex !important
+      }
+    }
+
+    .hdr-mobile-nav {
+      display: none;
+      gap: 4px
+    }
+
+    /* USER MANAGEMENT */
+    .users-view {
+      padding: 24px;
+      max-width: 1000px;
+      margin: 0 auto
+    }
+
+    .create-user-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px
+    }
+
+    .create-user-card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .create-user-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px
+    }
+
+    .create-user-form .fg-full {
+      grid-column: 1 / -1
+    }
+
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px var(--shadow)
+    }
+
+    .users-table th {
+      background: var(--bg);
+      padding: 10px 12px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--ink-muted);
+      text-align: left;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .users-table td {
+      padding: 10px 12px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: middle
+    }
+
+    .users-table tr:hover td {
+      background: #faf9f6
+    }
+
+    .role-select {
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--surface)
+    }
+
+    .rbadge {
+      padding: 3px 8px;
+      border-radius: 10px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .3px;
+      margin-right: 6px
+    }
+
+    .rbadge-super_admin {
+      background: #e8d4f0;
+      color: #6b2d8b
+    }
+
+    .rbadge-admin {
+      background: #d4e8f0;
+      color: #2d5f8b
+    }
+
+    .rbadge-printer {
+      background: #d4f0e0;
+      color: #2d7b4e
+    }
+
+    .rbadge-viewer {
+      background: #f0ead4;
+      color: #7b6a2d
+    }
+
+    .user-inactive td {
+      opacity: .45
+    }
+
+    .temp-pass-box {
+      background: #fff8e6;
+      border: 1px solid #e8d48a;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 12px;
+      display: none
+    }
+
+    .temp-pass-box code {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      user-select: all;
+      display: inline-block;
+      margin: 6px 0
+    }
+
+    .domain-hint {
+      font-size: 10px;
+      color: var(--ink-muted);
+      margin-top: 2px
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen">
+    <div class="auth-card">
+      <div class="logo">
+        <div class="logo-icon">CP</div>
+        <div>
+          <h1>Check Printer Pro</h1><span>Professional Check Printing</span>
+        </div>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab on" id="at-login" onclick="setAuthMode('login')">Sign In</button>
+        <button class="auth-tab" id="at-reg" onclick="setAuthMode('register')">Create Account</button>
+      </div>
+      <div style="font-size:11px;color:var(--ink-muted);text-align:center;margin-bottom:14px" id="auth-subtitle">Sign in
+        to your authorized account</div>
+      <button class="auth-back" id="auth-back" onclick="showLoginForm()">← Back to Sign In</button>
+      <div id="auth-error" class="auth-error"></div>
+      <div id="auth-success" class="auth-success"></div>
+      <form onsubmit="handleAuth(event)" id="auth-form">
+        <div class="fg"><label>Email</label><input type="email" id="auth-email" required
+            placeholder="you@sabercollege.edu"></div>
+        <div class="fg" id="auth-pass-group"><label>Password</label><input type="password" id="auth-pass" required
+            minlength="6" placeholder="Min 6 characters"></div>
+        <button type="submit" class="btn btn-p auth-submit" id="auth-btn">Sign In</button>
+      </form>
+      <div class="auth-forgot" id="auth-forgot"><a onclick="showForgotPassword()">Forgot your password?</a></div>
+    </div>
+  </div>
+
+  <!-- RESET PASSWORD SCREEN -->
+  <div id="reset-screen"
+    style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;display:none;align-items:center;justify-content:center">
+    <div class="auth-card">
+      <div class="logo">
+        <div class="logo-icon">CP</div>
+        <div>
+          <h1>Check Printer Pro</h1><span>Reset Your Password</span>
+        </div>
+      </div>
+      <div style="margin:20px 0 16px;font-size:11px;color:var(--ink-muted);text-align:center">Enter your new password
+        below</div>
+      <div id="reset-error" class="auth-error"></div>
+      <div id="reset-success" class="auth-success"></div>
+      <form onsubmit="handleNewPassword(event)" id="reset-form">
+        <div class="fg"><label>New Password</label><input type="password" id="reset-pass" required minlength="6"
+            placeholder="Min 6 characters"></div>
+        <div class="fg"><label>Confirm Password</label><input type="password" id="reset-pass2" required minlength="6"
+            placeholder="Repeat your password"></div>
+        <button type="submit" class="btn btn-p auth-submit" id="reset-btn">Update Password</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="main-app" style="display:none">
+    <header>
+      <div class="logo">
+        <div class="logo-icon">CP</div>
+        <div>
+          <h1>Check Printer Pro</h1><span>Professional Check Printing</span>
+        </div>
+      </div>
+      <nav class="main-nav">
+        <button class="nav-btn on" id="nv-create" onclick="switchView('create')">✏️ Create</button>
+        <button class="nav-btn" id="nv-history" onclick="switchView('history')">📋 History</button>
+        <button class="nav-btn" id="nv-reports" onclick="switchView('reports')">📊 Reports</button>
+        <button class="nav-btn" id="nv-users" onclick="switchView('users')" style="display:none">👥 Users</button>
+      </nav>
+      <div class="user-bar"><span id="user-role-badge" class="rbadge"></span><span id="user-email"></span><button
+          class="btn btn-s" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <!-- CREATE VIEW -->
+    <div class="app view-grid view on" id="view-create">
+      <div class="side no-print">
+        <div class="side-in">
+          <div id="edit-banner" class="edit-banner" style="display:none">
+            <span>✏️ Editing Check #<b id="edit-num"></b></span>
+            <button class="btn btn-s" style="font-size:10px;padding:4px 10px" onclick="cancelEdit()">Cancel</button>
+          </div>
+          <div class="tabs">
+            <button class="tab on" onclick="swTab(1)" id="tab-1"><span class="d"></span>Check 1</button>
+            <button class="tab" onclick="swTab(2)" id="tab-2"><span class="d"></span>Check 2</button>
+            <button class="tab" onclick="swTab(3)" id="tab-3"><span class="d"></span>Check 3</button>
+          </div>
+          <div class="font-ctrl">
+            <label>Font Size</label>
+            <input type="range" id="fsize" min="10" max="22" value="14" oninput="onFsize()">
+            <span class="fval" id="fsize-val">14pt</span>
+          </div>
+          <div class="fs">
+            <div class="fs-t">Check Information</div>
+            <div class="fr">
+              <div class="fg"><label>Date</label><input type="date" id="f-date" oninput="upd()"></div>
+              <div class="fg"><label>Amount ($)</label><input type="text" id="f-amt" placeholder="13,100.00"
+                  oninput="onAmt()"></div>
+            </div>
+            <div class="fg"><label>Pay to the Order of</label><input type="text" id="f-payto"
+                placeholder="Recipient's full name" oninput="upd()"></div>
+            <div class="fg"><label>Amount in Words</label><input type="text" id="f-atxt" placeholder="Auto-generated"
+                oninput="upd()">
+              <div class="hint">Auto-filled from numeric amount. Edit manually if needed.</div>
+            </div>
+            <div class="fg"><label>Address</label><textarea id="f-addr"
+                placeholder="1313 Mockingbird Lane&#10;Cockeysville, MD 22178" oninput="upd()"></textarea></div>
+            <div class="fg"><label>Memo</label><input type="text" id="f-memo" placeholder="Payment description"
+                oninput="upd()"></div>
+          </div>
+          <div class="save-actions">
+            <button class="btn btn-p" id="save-btn" onclick="saveCheck()">💾 Save Check</button>
+            <button class="btn btn-s" onclick="clrCur()">Clear</button>
+            <button class="btn btn-p" onclick="window.print()" style="margin-left:auto">🖨 Print Page</button>
+          </div>
+          <details class="cal">
+            <summary>⚙ Calibration — Check <span id="cal-lbl">1</span> (inches)</summary>
+            <div class="cal-note">X = from left edge, Y = from top of each check zone. Saved automatically.</div>
+            <div class="cal-grid">
+              <div class="ci"><label>Date — X</label><input type="number" step="0.05" id="p-date-x"
+                  oninput="saveCal();upd()"></div>
+              <div class="ci"><label>Date — Y</label><input type="number" step="0.05" id="p-date-y"
+                  oninput="saveCal();upd()"></div>
+              <div class="ci"><label>Pay To — X</label><input type="number" step="0.05" id="p-payto-x"
+                  oninput="saveCal();upd()"></div>
+              <div class="ci"><label>Pay To — Y</label><input type="number" step="0.05" id="p-payto-y"
+                  oninput="saveCal();upd()"></div>
+              <div class="ci"><label>Amount — X</label><input type="number" step="0.05" id="p-amt-x"
+                  oninput="saveCal();upd()"></div>
+              <div class="ci"><label>Amount — Y</label><input type="number" step="0.05" id="p-amt-y"
+                  oninput="saveCal();upd()"></div>
+              <div class="ci"><label>Amt Words — X</label><input type="number" step="0.05" id="p-atxt-x"
+                  oninput="saveCal();upd()"></div>
+              <div class="ci"><label>Amt Words — Y</label><input type="number" step="0.05" id="p-atxt-y"
+                  oninput="saveCal();upd()"></div>
+              <div class="ci"><label>Address — X</label><input type="number" step="0.05" id="p-addr-x"
+                  oninput="saveCal();upd()"></div>
+              <div class="ci"><label>Address — Y</label><input type="number" step="0.05" id="p-addr-y"
+                  oninput="saveCal();upd()"></div>
+              <div class="ci"><label>Memo — X</label><input type="number" step="0.05" id="p-memo-x"
+                  oninput="saveCal();upd()"></div>
+              <div class="ci"><label>Memo — Y</label><input type="number" step="0.05" id="p-memo-y"
+                  oninput="saveCal();upd()"></div>
+            </div>
+            <div class="cal-btns">
+              <button class="btn btn-s" style="font-size:10px;padding:5px 10px" onclick="resetCal()">Reset</button>
+              <button class="btn btn-s" style="font-size:10px;padding:5px 10px" onclick="copyCalAll()">Copy to
+                All</button>
+            </div>
+          </details>
+        </div>
+      </div>
+      <div class="prev">
+        <div class="prev-t no-print">Preview — Letter 8.5" × 11"</div>
+        <div class="print-tips no-print"><strong>⚠ Print Settings:</strong> Paper = Letter · Margins = None · Scale =
+          100% · Uncheck Headers/footers</div>
+        <div class="page" id="page"></div>
+      </div>
+    </div>
+
+    <!-- HISTORY VIEW -->
+    <div class="view" id="view-history">
+      <div class="hist-view">
+        <div class="hist-bar">
+          <select id="h-status" onchange="loadHistory()">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="printed">Printed</option>
+            <option value="voided">Voided</option>
+          </select>
+          <input type="date" id="h-from" onchange="loadHistory()" title="From date">
+          <input type="date" id="h-to" onchange="loadHistory()" title="To date">
+          <input type="text" id="h-search" placeholder="Search payee..." oninput="loadHistory()" style="width:160px">
+          <div class="spacer"></div>
+          <button class="btn btn-p" id="print-sel-btn" onclick="printSelected()" disabled>🖨 Print Selected (<span
+              id="sel-count">0</span>)</button>
+        </div>
+        <div id="hist-body"></div>
+      </div>
+    </div>
+
+    <!-- REPORTS VIEW -->
+    <div class="view" id="view-reports">
+      <div class="rpt-view">
+        <div class="hist-bar">
+          <label style="font-size:11px;font-weight:600;color:var(--ink-light)">Date Range:</label>
+          <input type="date" id="r-from" onchange="loadReport()">
+          <input type="date" id="r-to" onchange="loadReport()">
+          <div class="spacer"></div>
+          <button class="btn btn-s" onclick="exportCSV()">📥 Export CSV</button>
+        </div>
+        <div class="rpt-cards" id="rpt-cards"></div>
+        <div id="rpt-table"></div>
+      </div>
+    </div>
+
+    <!-- USERS VIEW -->
+    <div class="view" id="view-users">
+      <div class="users-view">
+        <div class="create-user-card">
+          <h3>➕ Create New User</h3>
+          <div class="create-user-form">
+            <div class="fg"><label>Email</label><input type="email" id="nu-email" placeholder="user@sabercollege.edu">
+              <div class="domain-hint">Only @sabercollege.edu emails allowed</div>
+            </div>
+            <div class="fg"><label>Display Name</label><input type="text" id="nu-name" placeholder="Full name"></div>
+            <div class="fg"><label>Temporary Password</label><input type="text" id="nu-pass"
+                placeholder="Min 6 characters"></div>
+            <div class="fg"><label>Role</label>
+              <select id="nu-role" class="role-select" style="width:100%;padding:7px 10px">
+                <option value="viewer">Viewer — Reports & History only</option>
+                <option value="printer">Printer — Create & Print checks</option>
+                <option value="admin">Admin — Full access</option>
+              </select>
+            </div>
+            <div class="fg-full" style="display:flex;gap:8px;align-items:start">
+              <button class="btn btn-p" onclick="createUser()">Create Account</button>
+              <button class="btn btn-s" onclick="generatePass()">🎲 Generate Password</button>
+            </div>
+          </div>
+          <div class="temp-pass-box" id="temp-pass-box">
+            <strong>✅ Account created!</strong><br>
+            Share these credentials with the user:<br>
+            <div>Email: <code id="tp-email"></code></div>
+            <div>Password: <code id="tp-pass"></code></div>
+            <div style="font-size:10px;color:var(--ink-muted);margin-top:6px">User must confirm their email before
+              signing in.</div>
+          </div>
+        </div>
+        <div id="users-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-box" id="toasts"></div>
+
+  <script>
+    /* ===== SUPABASE INIT ===== */
+    const SB_URL = 'https://afgntvrclqkbimrdsvlx.supabase.co';
+    const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmZ250dnJjbHFrYmltcmRzdmx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5NjY3NDUsImV4cCI6MjA5OTU0Mjc0NX0.PvlNw9eeHgk9_EEG0RULcZepcTVAfUTllC-rFO99Tpk';
+    const sb = window.supabase.createClient(SB_URL, SB_KEY);
+
+    /* ===== RBAC CONFIG ===== */
+    const ALLOWED_DOMAINS = ['sabercollege.edu'];
+    let userRole = 'viewer';
+    const CAN_CREATE = ['super_admin', 'admin', 'printer'];
+    const CAN_DELETE = ['super_admin', 'admin'];
+    const CAN_VOID = ['super_admin', 'admin'];
+    const CAN_REPORTS = ['super_admin', 'admin', 'viewer'];
+    const ROLE_LABELS = { super_admin: 'Super Admin', admin: 'Administrator', printer: 'Printer', viewer: 'Viewer' };
+
+    /* ===== AUTH ===== */
+    let authMode = 'login'; // 'login', 'register', 'forgot'
+    function hideAuthMsg() { document.getElementById('auth-error').style.display = 'none'; document.getElementById('auth-success').style.display = 'none'; }
+    function setAuthMode(mode) {
+      authMode = mode; hideAuthMsg();
+      document.getElementById('at-login').classList.toggle('on', mode === 'login');
+      document.getElementById('at-reg').classList.toggle('on', mode === 'register');
+      document.getElementById('auth-subtitle').textContent = mode === 'register' ? 'Only @sabercollege.edu emails allowed' : 'Sign in to your authorized account';
+      document.getElementById('auth-btn').textContent = mode === 'register' ? 'Create Account' : 'Sign In';
+      document.getElementById('auth-pass-group').style.display = '';
+      document.getElementById('auth-pass').setAttribute('required', '');
+      document.getElementById('auth-pass').placeholder = mode === 'register' ? 'Min 6 characters' : 'Enter your password';
+      document.getElementById('auth-forgot').style.display = mode === 'login' ? '' : 'none';
+      document.getElementById('auth-back').style.display = 'none';
+      document.querySelector('.auth-tabs').style.display = '';
+    }
+    function showForgotPassword() {
+      authMode = 'forgot'; hideAuthMsg();
+      document.querySelector('.auth-tabs').style.display = 'none';
+      document.getElementById('auth-subtitle').textContent = 'Enter your email to reset your password';
+      document.getElementById('auth-pass-group').style.display = 'none';
+      document.getElementById('auth-pass').removeAttribute('required');
+      document.getElementById('auth-btn').textContent = 'Send Reset Link';
+      document.getElementById('auth-forgot').style.display = 'none';
+      document.getElementById('auth-back').style.display = 'block';
+    }
+    function showLoginForm() { setAuthMode('login'); }
+    async function handleAuth(e) {
+      e.preventDefault(); const email = document.getElementById('auth-email').value;
+      hideAuthMsg(); document.getElementById('auth-btn').disabled = true;
+      try {
+        if (authMode === 'forgot') {
+          document.getElementById('auth-btn').textContent = 'Sending...';
+          const { error } = await sb.auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin + window.location.pathname
+          });
+          if (error) throw error;
+          const s = document.getElementById('auth-success'); s.textContent = '✉️ Password reset link sent! Check your email. After clicking the link, copy the URL from the browser and paste it in the box below.'; s.style.display = 'block';
+          setAuthMode('login');
+        } else if (authMode === 'register') {
+          // Domain whitelist check
+          const domain = email.split('@')[1]?.toLowerCase();
+          if (!ALLOWED_DOMAINS.includes(domain)) throw new Error('Only @' + ALLOWED_DOMAINS.join(', @') + ' emails are allowed.');
+          const pass = document.getElementById('auth-pass').value;
+          document.getElementById('auth-btn').textContent = 'Creating account...';
+          const { data, error } = await sb.auth.signUp({
+            email, password: pass, options: {
+              emailRedirectTo: window.location.origin + window.location.pathname
+            }
+          });
+          if (error) throw error;
+          if (data.session) {
+            // Auto-confirmed: profile created by trigger, log in directly
+            const { data: profile } = await sb.from('user_profiles').select('*').eq('id', data.session.user.id).single();
+            if (profile) { userRole = profile.role; showApp(data.session); return; }
+          }
+          const s = document.getElementById('auth-success');
+          s.textContent = '✅ Account created! Check your email to confirm, then sign in.';
+          s.style.display = 'block'; setAuthMode('login');
+        } else {
+          const pass = document.getElementById('auth-pass').value;
+          document.getElementById('auth-btn').textContent = 'Please wait...';
+          const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+          if (error) throw error;
+          const { data: profile, error: pErr } = await sb.from('user_profiles').select('*').eq('id', data.session.user.id).single();
+          if (pErr || !profile) { await sb.auth.signOut(); throw new Error('Account not authorized. Contact your administrator.'); }
+          if (!profile.is_active) { await sb.auth.signOut(); throw new Error('Your account has been deactivated. Contact your administrator.'); }
+          userRole = profile.role;
+          showApp(data.session);
+        }
+      } catch (err) { const el = document.getElementById('auth-error'); el.textContent = err.message; el.style.display = 'block'; }
+      finally { document.getElementById('auth-btn').disabled = false; if (authMode === 'login') document.getElementById('auth-btn').textContent = 'Sign In'; else if (authMode === 'register') document.getElementById('auth-btn').textContent = 'Create Account'; }
+    }
+    async function logout() { await sb.auth.signOut(); userRole = 'viewer'; document.getElementById('main-app').style.display = 'none'; document.getElementById('auth-screen').style.display = 'flex'; }
+    function showApp(session) {
+      document.getElementById('auth-screen').style.display = 'none'; document.getElementById('main-app').style.display = 'block';
+      document.getElementById('user-email').textContent = session.user.email;
+      const rb = document.getElementById('user-role-badge'); rb.textContent = ROLE_LABELS[userRole] || userRole; rb.className = 'rbadge rbadge-' + userRole;
+      document.getElementById('nv-create').style.display = CAN_CREATE.includes(userRole) ? '' : 'none';
+      document.getElementById('nv-reports').style.display = CAN_REPORTS.includes(userRole) ? '' : 'none';
+      document.getElementById('nv-users').style.display = userRole === 'super_admin' ? '' : 'none';
+      if (!CAN_CREATE.includes(userRole)) switchView('history'); else switchView('create');
+      loadCal(); render(); loadHistory(); if (CAN_REPORTS.includes(userRole)) loadReport();
+    }
+
+    /* ===== NAVIGATION ===== */
+    function switchView(v) {
+      ['create', 'history', 'reports', 'users'].forEach(id => {
+        const viewEl = document.getElementById('view-' + id);
+        const navEl = document.getElementById('nv-' + id);
+        if (viewEl) viewEl.classList.toggle('on', id === v);
+        if (navEl) navEl.classList.toggle('on', id === v);
+      });
+      if (v === 'history') loadHistory(); if (v === 'reports') loadReport(); if (v === 'users') loadUsers();
+    }
+
+    /* ===== CALIBRATION ===== */
+    const DPOS = { 'date-x': 6, 'date-y': .5, 'payto-x': 1.8, 'payto-y': 1, 'amt-x': 6.2, 'amt-y': 1, 'atxt-x': .35, 'atxt-y': 1.4, 'addr-x': .55, 'addr-y': 1.75, 'memo-x': 1, 'memo-y': 2.95 };
+    let cal = [{ ...DPOS }, { ...DPOS }, { ...DPOS }], active = 1, fontSize = 14;
+    function loadCal() {
+      try { const s = localStorage.getItem('cpCal3'); if (s) { const a = JSON.parse(s); if (Array.isArray(a) && a.length === 3) cal = a.map(o => ({ ...DPOS, ...o })); } } catch (e) { }
+      try { const f = localStorage.getItem('cpFontSize'); if (f) fontSize = parseInt(f) || 14; } catch (e) { }
+      document.getElementById('fsize').value = fontSize; document.getElementById('fsize-val').textContent = fontSize + 'pt'; loadCalUI();
+    }
+    function saveCal() { const c = cal[active - 1]; for (const k of Object.keys(DPOS)) { const el = document.getElementById('p-' + k); if (el) c[k] = parseFloat(el.value) || 0; } try { localStorage.setItem('cpCal3', JSON.stringify(cal)); } catch (e) { } }
+    function loadCalUI() { const c = cal[active - 1]; document.getElementById('cal-lbl').textContent = active; for (const k of Object.keys(DPOS)) { const el = document.getElementById('p-' + k); if (el) el.value = c[k]; } }
+    function resetCal() { cal[active - 1] = { ...DPOS }; loadCalUI(); saveCal(); upd(); }
+    function copyCalAll() { const s = { ...cal[active - 1] }; cal = [{ ...s }, { ...s }, { ...s }]; try { localStorage.setItem('cpCal3', JSON.stringify(cal)); } catch (e) { } upd(); }
+    function onFsize() { fontSize = parseInt(document.getElementById('fsize').value) || 14; document.getElementById('fsize-val').textContent = fontSize + 'pt'; try { localStorage.setItem('cpFontSize', '' + fontSize); } catch (e) { } upd(); }
+
+    /* ===== AMOUNT TO WORDS ===== */
+    function n2w(s) {
+      const cl = s.replace(/[^0-9.,]/g, '').replace(/,/g, ''); if (!cl || isNaN(parseFloat(cl))) return '';
+      const p = cl.split('.'), n = parseInt(p[0], 10), ct = p[1] ? p[1].padEnd(2, '0').substring(0, 2) : '00';
+      if (n > 999999999999) return 'Amount too large';
+      const o = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+      const t = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+      function b1k(n) { if (!n) return ''; if (n < 20) return o[n]; if (n < 100) return t[n / 10 | 0] + (n % 10 ? '-' + o[n % 10] : ''); return o[n / 100 | 0] + ' hundred' + (n % 100 ? ' ' + b1k(n % 100) : ''); }
+      function cv(n) { if (!n) return 'zero'; let r = ''; const B = n / 1e9 | 0; if (B) { r += b1k(B) + ' billion '; n %= 1e9; } const M = n / 1e6 | 0; if (M) { r += b1k(M) + ' million '; n %= 1e6; } const K = n / 1e3 | 0; if (K) { r += b1k(K) + ' thousand '; n %= 1e3; } if (n > 0) r += b1k(n); return r.trim(); }
+      let w = cv(n); return w.charAt(0).toUpperCase() + w.slice(1) + ' and ' + ct + '/100';
+    }
+
+    /* ===== CHECK FORM ===== */
+    const chks = [{ date: '', payTo: '', amt: '', atxt: '', addr: '', memo: '' }, { date: '', payTo: '', amt: '', atxt: '', addr: '', memo: '' }, { date: '', payTo: '', amt: '', atxt: '', addr: '', memo: '' }];
+    const autoT = [true, true, true];
+    let editingId = null, editingNum = null;
+
+    function onAmt() { const v = document.getElementById('f-amt').value, tf = document.getElementById('f-atxt'); if (autoT[active - 1] || tf.value === '' || tf.value === n2w(chks[active - 1].amt)) { const c = n2w(v); tf.value = c; autoT[active - 1] = true; tf.classList.toggle('auto-filled', c.length > 0); } upd(); }
+    function swTab(n) { saveF(); active = n; document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('on', i === n - 1)); loadF(); loadCalUI(); dots(); }
+    function saveF() { const c = chks[active - 1]; c.date = document.getElementById('f-date').value; c.payTo = document.getElementById('f-payto').value; c.amt = document.getElementById('f-amt').value; c.atxt = document.getElementById('f-atxt').value; c.addr = document.getElementById('f-addr').value; c.memo = document.getElementById('f-memo').value; }
+    function loadF() { const c = chks[active - 1]; document.getElementById('f-date').value = c.date; document.getElementById('f-payto').value = c.payTo; document.getElementById('f-amt').value = c.amt; document.getElementById('f-atxt').value = c.atxt; document.getElementById('f-addr').value = c.addr; document.getElementById('f-memo').value = c.memo; const tf = document.getElementById('f-atxt'); tf.classList.toggle('auto-filled', autoT[active - 1] && c.atxt.length > 0); }
+    function upd() { saveF(); render(); dots(); }
+    function dots() { chks.forEach((c, i) => { document.getElementById('tab-' + (i + 1)).classList.toggle('has', !!(c.date || c.payTo || c.amt || c.atxt || c.addr || c.memo)); }); }
+    function fDate(s) { if (!s) return ''; const d = new Date(s + 'T00:00:00'); return (d.getMonth() + 1 + '').padStart(2, '0') + '/' + ('' + d.getDate()).padStart(2, '0') + '/' + d.getFullYear(); }
+    function clrCur() { const c = chks[active - 1]; c.date = ''; c.payTo = ''; c.amt = ''; c.atxt = ''; c.addr = ''; c.memo = ''; autoT[active - 1] = true; editingId = null; editingNum = null; document.getElementById('edit-banner').style.display = 'none'; document.getElementById('save-btn').innerHTML = '💾 Save Check'; loadF(); render(); dots(); }
+    function clearAll() { if (!confirm('Clear all checks?')) return; chks.forEach((c, i) => { c.date = ''; c.payTo = ''; c.amt = ''; c.atxt = ''; c.addr = ''; c.memo = ''; autoT[i] = true; }); editingId = null; editingNum = null; document.getElementById('edit-banner').style.display = 'none'; document.getElementById('save-btn').innerHTML = '💾 Save Check'; loadF(); render(); dots(); }
+
+    /* ===== RENDER PREVIEW ===== */
+    function render() {
+      const pg = document.getElementById('page'); pg.innerHTML = '';
+      chks.forEach((c, i) => {
+        const has = c.date || c.payTo || c.amt || c.atxt || c.addr || c.memo; const z = document.createElement('div'); z.className = 'zone'; const P = cal[i];
+        if (i < 2) z.innerHTML = '<div class="zone-sep"></div>';
+        if (!has) z.innerHTML += `<div class="zone-label">Check ${i + 1}</div>`;
+        if (has) {
+          const dt = fDate(c.date), av = c.amt || '', mFs = fontSize + 'pt', sFs = Math.max(fontSize - 2, 9) + 'pt';
+          if (dt) z.innerHTML += `<div class="cf" style="left:${P['date-x']}in;top:${P['date-y']}in;font-size:${mFs}">${dt}</div>`;
+          if (c.payTo) z.innerHTML += `<div class="cf" style="left:${P['payto-x']}in;top:${P['payto-y']}in;font-size:${mFs}">${c.payTo}</div>`;
+          if (av) z.innerHTML += `<div class="cf" style="left:${P['amt-x']}in;top:${P['amt-y']}in;font-size:${mFs};font-weight:700">${av}</div>`;
+          if (c.atxt) z.innerHTML += `<div class="cf cf-atxt" style="left:${P['atxt-x']}in;top:${P['atxt-y']}in;font-size:${sFs}">${c.atxt}</div>`;
+          if (c.addr) z.innerHTML += `<div class="cf cf-addr" style="left:${P['addr-x']}in;top:${P['addr-y']}in;font-size:${Math.max(fontSize - 3, 8)}pt">${c.addr.replace(/\n/g, '<br>')}</div>`;
+          if (c.memo) z.innerHTML += `<div class="cf" style="left:${P['memo-x']}in;top:${P['memo-y']}in;font-size:${sFs}">${c.memo}</div>`;
+        }
+        pg.appendChild(z);
+      });
+    }
+
+    /* ===== SUPABASE CRUD ===== */
+    async function saveCheck() {
+      if (!CAN_CREATE.includes(userRole)) { toast('Permission denied', 'err'); return; }
+      saveF(); const c = chks[active - 1];
+      if (!c.payTo && !c.amt) { toast('Enter at least payee or amount', 'err'); return; }
+      const row = { date: c.date || null, pay_to: c.payTo, amount: parseFloat(c.amt.replace(/,/g, '')) || 0, amount_words: c.atxt, address: c.addr, memo: c.memo };
+      try {
+        if (editingId) {
+          const { error } = await sb.from('checks').update(row).eq('id', editingId);
+          if (error) throw error; toast('Check #' + editingNum + ' updated', 'ok'); cancelEdit();
+        } else {
+          const { data: { user } } = await sb.auth.getUser(); row.user_id = user.id;
+          const { error } = await sb.from('checks').insert(row);
+          if (error) throw error; toast('Check saved!', 'ok'); clrCur();
+        }
+        loadHistory(); loadReport();
+      } catch (err) { toast(err.message, 'err'); }
+    }
+    async function deleteCheck(id, num) {
+      if (!CAN_DELETE.includes(userRole)) { toast('Permission denied', 'err'); return; }
+      if (!confirm('Delete check #' + num + '?')) return;
+      try { const { error } = await sb.from('checks').delete().eq('id', id); if (error) throw error; toast('Check deleted', 'ok'); loadHistory(); loadReport(); }
+      catch (err) { toast(err.message, 'err'); }
+    }
+    async function voidCheck(id, num) {
+      if (!CAN_VOID.includes(userRole)) { toast('Permission denied', 'err'); return; }
+      if (!confirm('Void check #' + num + '?')) return;
+      try { const { error } = await sb.from('checks').update({ status: 'voided' }).eq('id', id); if (error) throw error; toast('Check #' + num + ' voided', 'ok'); loadHistory(); loadReport(); }
+      catch (err) { toast(err.message, 'err'); }
+    }
+    function editCheck(chk) {
+      switchView('create'); swTab(1); editingId = chk.id; editingNum = chk.check_number;
+      const c = chks[0]; c.date = chk.date || ''; c.payTo = chk.pay_to || ''; c.amt = chk.amount ? chk.amount.toString() : ''; c.atxt = chk.amount_words || ''; c.addr = chk.address || ''; c.memo = chk.memo || '';
+      loadF(); render(); dots();
+      document.getElementById('edit-banner').style.display = 'flex'; document.getElementById('edit-num').textContent = editingNum;
+      document.getElementById('save-btn').innerHTML = '💾 Update Check #' + editingNum;
+    }
+    function cancelEdit() { editingId = null; editingNum = null; document.getElementById('edit-banner').style.display = 'none'; document.getElementById('save-btn').innerHTML = '💾 Save Check'; clrCur(); }
+
+    /* ===== HISTORY ===== */
+    let allChecks = [], selectedIds = new Set();
+    async function loadHistory() {
+      let q = sb.from('checks').select('*').order('created_at', { ascending: false });
+      const st = document.getElementById('h-status').value; if (st) q = q.eq('status', st);
+      const fr = document.getElementById('h-from').value; if (fr) q = q.gte('date', fr);
+      const to = document.getElementById('h-to').value; if (to) q = q.lte('date', to);
+      const sr = document.getElementById('h-search').value.trim(); if (sr) q = q.ilike('pay_to', '%' + sr + '%');
+      try {
+        const { data, error } = await q; if (error) throw error; allChecks = data || []; selectedIds.clear(); renderHistory();
+      } catch (err) { toast(err.message, 'err'); }
+    }
+    function renderHistory() {
+      const b = document.getElementById('hist-body');
+      if (!allChecks.length) { b.innerHTML = '<div class="empty-state"><h3>No checks found</h3><p>Create your first check in the Create tab.</p></div>'; updateSelCount(); return; }
+      const canEdit = CAN_CREATE.includes(userRole), canVoid = CAN_VOID.includes(userRole), canDel = CAN_DELETE.includes(userRole);
+      document.getElementById('print-sel-btn').style.display = canEdit ? '' : 'none';
+      let h = '<table class="hist-table"><thead><tr>' + (canEdit ? '<th><input type="checkbox" onchange="toggleAll(this)"></th>' : '<th></th>') + '<th>#</th><th>Date</th><th>Pay To</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead><tbody>';
+      allChecks.forEach(c => {
+        const dt = c.date ? fDate(c.date) : '—'; const amt = c.amount ? Number(c.amount).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '—';
+        const badge = `<span class="badge badge-${c.status}">${c.status}</span>`;
+        const chk = selectedIds.has(c.id) ? 'checked' : '';
+        h += `<tr>
+      <td>${canEdit ? `<input type="checkbox" ${chk} onchange="toggleSel('${c.id}',this)">` : ''}</td>
+      <td><b>${c.check_number}</b></td><td>${dt}</td><td>${c.pay_to || '—'}</td><td style="font-family:'IBM Plex Mono',monospace;font-weight:600">$${amt}</td><td>${badge}</td>
+      <td class="hist-actions">
+        ${canEdit ? `<button onclick='editCheck(${JSON.stringify(c).replace(/'/g, "\\'")})' title="Edit">✏️</button>` : ''}
+        ${canVoid && c.status !== 'voided' ? `<button onclick="voidCheck('${c.id}',${c.check_number})" title="Void">🚫</button>` : ''}
+        ${canDel ? `<button onclick="deleteCheck('${c.id}',${c.check_number})" title="Delete">🗑️</button>` : ''}
+      </td></tr>`;
+      });
+      h += '</tbody></table>'; b.innerHTML = h; updateSelCount();
+    }
+    function toggleSel(id, el) { if (el.checked) selectedIds.add(id); else selectedIds.delete(id); updateSelCount(); }
+    function toggleAll(el) { const boxes = document.querySelectorAll('.hist-table tbody input[type=checkbox]'); boxes.forEach(b => { b.checked = el.checked; const id = allChecks[Array.from(boxes).indexOf(b)]?.id; if (id) { if (el.checked) selectedIds.add(id); else selectedIds.delete(id); } }); updateSelCount(); }
+    function updateSelCount() { const n = selectedIds.size; document.getElementById('sel-count').textContent = n; document.getElementById('print-sel-btn').disabled = n === 0; }
+
+    /* ===== BATCH PRINT ===== */
+    function printSelected() {
+      if (!selectedIds.size) return;
+      const sel = allChecks.filter(c => selectedIds.has(c.id) && c.status !== 'voided');
+      if (!sel.length) { toast('No printable checks selected', 'err'); return; }
+      const pg = document.getElementById('page'); pg.innerHTML = '';
+      // Build pages of 3
+      const pages = []; for (let i = 0; i < sel.length; i += 3)pages.push(sel.slice(i, i + 3));
+      // Clear existing page, we'll use the preview container
+      const prev = document.querySelector('.prev');
+      // Remove existing pages except first
+      prev.querySelectorAll('.page').forEach(p => p.remove());
+      pages.forEach((group, pi) => {
+        const pageDiv = document.createElement('div'); pageDiv.className = 'page';
+        for (let zi = 0; zi < 3; zi++) {
+          const z = document.createElement('div'); z.className = 'zone'; const P = cal[zi];
+          if (zi < 2) z.innerHTML = '<div class="zone-sep"></div>';
+          const c = group[zi];
+          if (c) {
+            const dt = c.date ? fDate(c.date) : '', av = c.amount ? c.amount.toString() : '', mFs = fontSize + 'pt', sFs = Math.max(fontSize - 2, 9) + 'pt';
+            if (dt) z.innerHTML += `<div class="cf" style="left:${P['date-x']}in;top:${P['date-y']}in;font-size:${mFs}">${dt}</div>`;
+            if (c.pay_to) z.innerHTML += `<div class="cf" style="left:${P['payto-x']}in;top:${P['payto-y']}in;font-size:${mFs}">${c.pay_to}</div>`;
+            if (av) z.innerHTML += `<div class="cf" style="left:${P['amt-x']}in;top:${P['amt-y']}in;font-size:${mFs};font-weight:700">${av}</div>`;
+            if (c.amount_words) z.innerHTML += `<div class="cf cf-atxt" style="left:${P['atxt-x']}in;top:${P['atxt-y']}in;font-size:${sFs}">${c.amount_words}</div>`;
+            if (c.address) z.innerHTML += `<div class="cf cf-addr" style="left:${P['addr-x']}in;top:${P['addr-y']}in;font-size:${Math.max(fontSize - 3, 8)}pt">${c.address.replace(/\n/g, '<br>')}</div>`;
+            if (c.memo) z.innerHTML += `<div class="cf" style="left:${P['memo-x']}in;top:${P['memo-y']}in;font-size:${sFs}">${c.memo}</div>`;
+          } else { z.innerHTML += `<div class="zone-label"></div>`; }
+          pageDiv.appendChild(z);
+        }
+        prev.appendChild(pageDiv);
+      });
+      switchView('create');
+      setTimeout(() => { window.print(); markPrinted(sel.map(c => c.id)); }, 300);
+    }
+    async function markPrinted(ids) {
+      try { await sb.from('checks').update({ status: 'printed' }).in('id', ids); loadHistory(); loadReport(); } catch (e) { }
+    }
+
+    /* ===== REPORTS ===== */
+    let rptChecks = [];
+    async function loadReport() {
+      let q = sb.from('checks').select('*').order('date', { ascending: false });
+      const fr = document.getElementById('r-from').value; if (fr) q = q.gte('date', fr);
+      const to = document.getElementById('r-to').value; if (to) q = q.lte('date', to);
+      try {
+        const { data, error } = await q; if (error) throw error; rptChecks = data || []; renderReport();
+      } catch (err) { toast(err.message, 'err'); }
+    }
+    function renderReport() {
+      const total = rptChecks.length, totalAmt = rptChecks.reduce((s, c) => s + Number(c.amount || 0), 0);
+      const pending = rptChecks.filter(c => c.status === 'pending').length;
+      const printed = rptChecks.filter(c => c.status === 'printed').length;
+      const voided = rptChecks.filter(c => c.status === 'voided').length;
+      const fmt = n => n.toLocaleString('en-US', { minimumFractionDigits: 2 });
+      document.getElementById('rpt-cards').innerHTML = `
+    <div class="rpt-card"><div class="val">${total}</div><div class="lbl">Total Checks</div></div>
+    <div class="rpt-card"><div class="val">$${fmt(totalAmt)}</div><div class="lbl">Total Amount</div></div>
+    <div class="rpt-card"><div class="val" style="color:#856404">${pending}</div><div class="lbl">Pending</div></div>
+    <div class="rpt-card"><div class="val" style="color:#155724">${printed}</div><div class="lbl">Printed</div></div>
+    <div class="rpt-card"><div class="val" style="color:#721c24">${voided}</div><div class="lbl">Voided</div></div>`;
+      let h = '<table class="hist-table"><thead><tr><th>#</th><th>Date</th><th>Pay To</th><th>Amount</th><th>Memo</th><th>Status</th></tr></thead><tbody>';
+      rptChecks.forEach(c => {
+        const dt = c.date ? fDate(c.date) : '—', amt = c.amount ? '$' + fmt(Number(c.amount)) : '—';
+        h += `<tr><td>${c.check_number}</td><td>${dt}</td><td>${c.pay_to || '—'}</td><td style="font-family:'IBM Plex Mono',monospace;font-weight:600">${amt}</td><td>${c.memo || '—'}</td><td><span class="badge badge-${c.status}">${c.status}</span></td></tr>`;
+      });
+      h += '</tbody></table>'; document.getElementById('rpt-table').innerHTML = h;
+    }
+    function exportCSV() {
+      if (!rptChecks.length) { toast('No data to export', 'err'); return; }
+      let csv = 'Check #,Date,Pay To,Amount,Amount Words,Address,Memo,Status\n';
+      rptChecks.forEach(c => { csv += `${c.check_number},"${c.date || ''}","${(c.pay_to || '').replace(/"/g, '""')}",${c.amount || 0},"${(c.amount_words || '').replace(/"/g, '""')}","${(c.address || '').replace(/"/g, '""')}","${(c.memo || '').replace(/"/g, '""')}",${c.status}\n`; });
+      const blob = new Blob([csv], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'checks_report_' + new Date().toISOString().slice(0, 10) + '.csv'; a.click(); toast('CSV exported', 'ok');
+    }
+
+    /* ===== USER MANAGEMENT ===== */
+    async function loadUsers() {
+      if (userRole !== 'super_admin') return;
+      try {
+        const { data, error } = await sb.from('user_profiles').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        renderUsers(data || []);
+      } catch (err) { toast(err.message, 'err'); }
+    }
+    function renderUsers(users) {
+      const el = document.getElementById('users-list');
+      if (!users.length) { el.innerHTML = '<div class="empty-state"><h3>No users yet</h3><p>Create the first user above.</p></div>'; return; }
+      let h = '<table class="users-table"><thead><tr><th>Email</th><th>Name</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody>';
+      users.forEach(u => {
+        const isMe = u.role === 'super_admin';
+        const badge = `<span class="rbadge rbadge-${u.role}">${ROLE_LABELS[u.role] || u.role}</span>`;
+        const status = u.is_active ? '<span style="color:var(--accent)">✅ Active</span>' : '<span style="color:var(--danger)">🚫 Inactive</span>';
+        const created = new Date(u.created_at).toLocaleDateString();
+        h += `<tr class="${u.is_active ? '' : 'user-inactive'}">
+          <td>${u.email}</td><td>${u.display_name || '—'}</td><td>${badge}</td><td>${status}</td><td>${created}</td>
+          <td class="hist-actions">${isMe ? '<span style="font-size:10px;color:var(--ink-muted)">You</span>' : `
+            <select class="role-select" onchange="changeRole('${u.id}',this.value)">
+              <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>Viewer</option>
+              <option value="printer" ${u.role === 'printer' ? 'selected' : ''}>Printer</option>
+              <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+            </select>
+            <button class="btn btn-s" style="font-size:10px;padding:4px 8px" onclick="toggleUserActive('${u.id}',${!u.is_active})">${u.is_active ? '🚫 Deactivate' : '✅ Activate'}</button>
+          `}</td></tr>`;
+      });
+      h += '</tbody></table>'; el.innerHTML = h;
+    }
+    function generatePass() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$';
+      let pass = ''; for (let i = 0; i < 12; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+      document.getElementById('nu-pass').value = pass;
+    }
+    async function createUser() {
+      const email = document.getElementById('nu-email').value.trim();
+      const name = document.getElementById('nu-name').value.trim();
+      const pass = document.getElementById('nu-pass').value;
+      const role = document.getElementById('nu-role').value;
+      if (!email || !pass) { toast('Email and password are required', 'err'); return; }
+      if (pass.length < 6) { toast('Password must be at least 6 characters', 'err'); return; }
+      const domain = email.split('@')[1]?.toLowerCase();
+      if (!ALLOWED_DOMAINS.includes(domain)) { toast('Only @' + ALLOWED_DOMAINS.join(', @') + ' emails are allowed', 'err'); return; }
+      try {
+        const { data: { session: adminSession } } = await sb.auth.getSession();
+        const { data: signUpData, error: signUpErr } = await sb.auth.signUp({
+          email, password: pass, options: {
+            emailRedirectTo: window.location.origin + window.location.pathname
+          }
+        });
+        if (signUpErr) throw signUpErr;
+        // Restore admin session in case autoconfirm changed it
+        if (adminSession) {
+          await sb.auth.setSession({ access_token: adminSession.access_token, refresh_token: adminSession.refresh_token });
+        }
+        const { error: profErr } = await sb.from('user_profiles').insert({
+          id: signUpData.user.id, email: email, display_name: name || null, role: role, created_by: adminSession?.user?.id
+        });
+        if (profErr) throw profErr;
+        document.getElementById('tp-email').textContent = email;
+        document.getElementById('tp-pass').textContent = pass;
+        document.getElementById('temp-pass-box').style.display = 'block';
+        document.getElementById('nu-email').value = ''; document.getElementById('nu-name').value = ''; document.getElementById('nu-pass').value = '';
+        toast('User created successfully!', 'ok'); loadUsers();
+      } catch (err) { toast(err.message, 'err'); }
+    }
+    async function changeRole(userId, newRole) {
+      try {
+        const { error } = await sb.from('user_profiles').update({ role: newRole }).eq('id', userId);
+        if (error) throw error; toast('Role updated', 'ok'); loadUsers();
+      } catch (err) { toast(err.message, 'err'); }
+    }
+    async function toggleUserActive(userId, activate) {
+      if (!confirm(`${activate ? 'Activate' : 'Deactivate'} this user?`)) return;
+      try {
+        const { error } = await sb.from('user_profiles').update({ is_active: activate }).eq('id', userId);
+        if (error) throw error; toast('User ' + (activate ? 'activated' : 'deactivated'), 'ok'); loadUsers();
+      } catch (err) { toast(err.message, 'err'); }
+    }
+
+    /* ===== TOAST ===== */
+    function toast(msg, type = 'info') { const t = document.createElement('div'); t.className = 'toast toast-' + type; t.textContent = msg; document.getElementById('toasts').appendChild(t); setTimeout(() => t.remove(), 3500); }
+
+    /* ===== PASSWORD RESET HANDLER ===== */
+    async function handleNewPassword(e) {
+      e.preventDefault();
+      const pass = document.getElementById('reset-pass').value;
+      const pass2 = document.getElementById('reset-pass2').value;
+      document.getElementById('reset-error').style.display = 'none';
+      document.getElementById('reset-success').style.display = 'none';
+      if (pass !== pass2) { const el = document.getElementById('reset-error'); el.textContent = 'Passwords do not match.'; el.style.display = 'block'; return; }
+      document.getElementById('reset-btn').disabled = true; document.getElementById('reset-btn').textContent = 'Updating...';
+      try {
+        const { error } = await sb.auth.updateUser({ password: pass });
+        if (error) throw error;
+        const s = document.getElementById('reset-success'); s.textContent = '✅ Password updated! Redirecting to login...'; s.style.display = 'block';
+        document.getElementById('reset-form').style.display = 'none';
+        await sb.auth.signOut();
+        setTimeout(() => { window.location.hash = ''; document.getElementById('reset-screen').style.display = 'none'; document.getElementById('auth-screen').style.display = 'flex'; }, 2000);
+      } catch (err) { const el = document.getElementById('reset-error'); el.textContent = err.message; el.style.display = 'block'; }
+      finally { document.getElementById('reset-btn').disabled = false; document.getElementById('reset-btn').textContent = 'Update Password'; }
+    }
+
+    /* ===== INIT ===== */
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('f-atxt').addEventListener('input', function () { if (this.value !== n2w(document.getElementById('f-amt').value)) autoT[active - 1] = false; });
+
+      // Listen for Supabase auth state changes (handles password recovery redirect)
+      sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          document.getElementById('auth-screen').style.display = 'none';
+          document.getElementById('reset-screen').style.display = 'flex';
+        }
+      });
+
+      // Check for recovery token in URL hash (from password reset email)
+      const hash = window.location.hash;
+      if (hash && hash.includes('type=recovery')) {
+        // Parse the access_token and refresh_token from the hash
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        const refreshToken = params.get('refresh_token');
+        if (accessToken && refreshToken) {
+          try {
+            const { error } = await sb.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+            if (!error) {
+              document.getElementById('auth-screen').style.display = 'none';
+              document.getElementById('reset-screen').style.display = 'flex';
+              return;
+            }
+          } catch (e) { console.error('Recovery token invalid', e); }
+        }
+      }
+
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        try {
+          const { data: profile } = await sb.from('user_profiles').select('*').eq('id', session.user.id).single();
+          if (profile && profile.is_active) { userRole = profile.role; showApp(session); }
+          else { await sb.auth.signOut(); }
+        } catch (e) { await sb.auth.signOut(); }
+      }
+    });
+  </script>
+</body>
+
+</html>
